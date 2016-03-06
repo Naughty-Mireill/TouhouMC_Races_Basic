@@ -1,8 +1,0 @@
-name: TouhouMC_Races_Basic
-main: net.TouhouMC.noteumaple.TouhouMC_Races_Basic.TouhouMC_Races_Basic
-author: noteumaple
-version: 1.0
-commands:
-   tmcr:
-      description: Base Command
-      aliases: [touhoumcraces,races]
