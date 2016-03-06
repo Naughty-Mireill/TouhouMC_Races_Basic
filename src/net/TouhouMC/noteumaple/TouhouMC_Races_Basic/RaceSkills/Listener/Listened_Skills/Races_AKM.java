@@ -9,6 +9,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.GameMode;
 import org.bukkit.Sound;
+import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -42,10 +43,23 @@ public class Races_AKM extends JavaPlugin {
 				pl.setGameMode(GameMode.SPECTATOR);
 				pl.getWorld().playSound(pl.getLocation(), Sound.BAT_TAKEOFF, 1.0F, 0.0F);
 				pl.sendMessage(thrpre + ChatColor.RED + "あなたは蝙蝠になった！！");
-				Entity bat = pl.getWorld().spawnEntity(pl.getEyeLocation(), EntityType.BAT);
+				final Entity bat = pl.getWorld().spawnEntity(pl.getEyeLocation(), EntityType.BAT);
 				MetadataValue invincible = new FixedMetadataValue(plugin, pl.getUniqueId());
 				bat.setMetadata("invincible", invincible);
 				pl.setMetadata("using-magic", usingmagic);
+				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+					public void run()
+					{
+						pl.teleport(bat);
+						pl.setGameMode(GameMode.SURVIVAL);
+						MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+						pl.setMetadata("using-magic", usingmagic);
+						pl.removeMetadata("batman", plugin);
+						pl.sendMessage(thrpre + ChatColor.RED + "バンプカモフラージュの効果が切れました");
+						bat.removeMetadata("invincible", plugin);
+						((Damageable) bat).damage(1000.0D);
+					}
+				}, 100L);
 			}
 		}, 20L);
 	}
@@ -65,7 +79,7 @@ public class Races_AKM extends JavaPlugin {
 				}
 				if (!no_damage)
 				{
-					((LivingEntity)enemy).damage(5.0D);
+					((LivingEntity)enemy).damage(15.0D);
 					((LivingEntity)enemy).addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 3));
 					enemy.getWorld().playEffect(enemy.getLocation(), Effect.TILE_DUST, 12);
 				}
@@ -84,12 +98,13 @@ public class Races_AKM extends JavaPlugin {
 
 	//鬼の埋め落とし
 	public static void oni_kairiki(Player pl, final Plugin plugin, final PlayerInteractEntityEvent event, final LivingEntity entity){
+		pl.sendMessage(thrpre + ChatColor.GOLD + "敵を地面に接着させた！！");
 		entity.getWorld().playSound(event.getRightClicked().getLocation(), Sound.DONKEY_ANGRY, 1, -1);
 		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
 		pl.setMetadata("using-magic", usingmagic);
 		final int task = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable(){
 			public void run(){
-				entity.getVelocity().setY(-5);
+				entity.setVelocity(entity.getVelocity().setY(-5));
 			}
 		},0,1L);
 		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
@@ -100,7 +115,7 @@ public class Races_AKM extends JavaPlugin {
 				pl.setMetadata("using-magic", usingmagic);
 				pl.sendMessage(thrpre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
 			}
-		}, 100L);
+		}, 120L);
 	}
 
 	//吸血鬼の吸血
@@ -136,7 +151,7 @@ public class Races_AKM extends JavaPlugin {
 			pl.sendMessage(thrpre + ChatColor.DARK_RED + "きゅっとしてどかーん！");
 			target.getWorld().playSound(pl.getLocation(), Sound.EXPLODE, 2.0F, 1.0F);
 			target.getWorld().playEffect(pl.getLocation(), Effect.EXPLOSION, 1, 2);
-			if (target instanceof Player)
+			if (target instanceof LivingEntity)
 			{
 				((Player)target).damage(90D,pl);
 			}

@@ -20,15 +20,21 @@ import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Bat;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Horse;
+import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowman;
+import org.bukkit.entity.Villager;
+import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -126,24 +132,16 @@ public class Races_EventActionListener implements Listener {
 		if (pl.getGameMode() == GameMode.SPECTATOR) pl.setGameMode(GameMode.SURVIVAL);
 		if (pl.hasMetadata("freeze")) pl.removeMetadata("freeze", TouhouMC_Races_Basic.plugin0);
 	}
-	//TODO エゴ効果
-	@EventHandler(priority=EventPriority.MONITOR)
-	public void vanishedInteract(final PlayerInteractEvent e){
-		if (e.getPlayer().hasMetadata("vanished"))
-		{
-			e.setCancelled(true);
-		}
-	}
-	
+
 	//クリック関連の処理(通常クリック)
-	@EventHandler
+	@EventHandler(ignoreCancelled = false)
 	public void onPlayerInteract(final PlayerInteractEvent e){
 		final Player pl = e.getPlayer();
+		if (!pl.hasMetadata("vanished"))
+		{
 		Material handitem = pl.getItemInHand().getType();
 		String race = conf.getString("user." + pl.getUniqueId() + ".race").toString();
 		int mana = 0;
-		if (!e.isCancelled())
-		{
 			///右クリ
 			if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
 				///グローバル
@@ -374,14 +372,17 @@ public class Races_EventActionListener implements Listener {
 				}
 				///天狗神風書き込み有）（前置詞有（ブースター処有
 				mana = 40;
-				if (race.equalsIgnoreCase("tenngu") || race.equalsIgnoreCase("karasutenngu") || race.equalsIgnoreCase("syoukaitenngu") && conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana) {
-					int boost = 0;
-					if (pl.getMetadata("spilituse").get(0).asInt() > 0 && handitem == Material.FEATHER && (pl.isSneaking())){
-						boost = pl.getMetadata("spilituse").get(0).asInt();
-						Races_YUM.tenngu_kamikaze(pl, boost);
-						conf.set("user." + pl.getUniqueId() + ".spilit", conf.getDouble("user." + pl.getUniqueId() + ".spilit") - mana);
-						TouhouMC_Races_Basic.SaveTMCConfig();
-						pl.sendMessage(pluginpre + ChatColor.GREEN + "霊力" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
+				if (race.equalsIgnoreCase("tenngu") || race.equalsIgnoreCase("karasutenngu") || race.equalsIgnoreCase("syoukaitenngu") ) {
+					if(conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana)
+					{
+						int boost = 0;
+						if (pl.getMetadata("spilituse").get(0).asInt() > 0 && handitem == Material.FEATHER && (pl.isSneaking())){
+							boost = pl.getMetadata("spilituse").get(0).asInt();
+							Races_YUM.tenngu_kamikaze(pl, boost);
+							conf.set("user." + pl.getUniqueId() + ".spilit", conf.getDouble("user." + pl.getUniqueId() + ".spilit") - mana);
+							TouhouMC_Races_Basic.SaveTMCConfig();
+							pl.sendMessage(pluginpre + ChatColor.GREEN + "霊力" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
+						}
 					}
 				}
 				//妖魔 金斧（書き込み有）（前置詞有(詠唱有)
@@ -495,7 +496,7 @@ public class Races_EventActionListener implements Listener {
 				}
 				//TDO 哨戒天狗
 				///哨戒天狗察知書き込み有）（前置詞有（ブースター処有
-				mana = 20;
+				mana = 1;
 				if (race.equalsIgnoreCase("syoukaitenngu") && conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana) {
 					int boost = 0;
 					if (pl.getMetadata("spilituse").get(0).asInt() > 0 && handitem == Material.COMPASS && (pl.isSneaking())){
@@ -533,6 +534,8 @@ public class Races_EventActionListener implements Listener {
 							TouhouMC_Races_Basic.SaveTMCConfig();
 							pl.getWorld().playSound(pl.getLocation(), Sound.SILVERFISH_WALK, 1, -1);
 							pl.sendMessage(pluginpre + ChatColor.GREEN + "霊力" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
+							MetadataValue casting = new FixedMetadataValue(TouhouMC_Races_Basic.plugin0, Boolean.valueOf(true));
+							pl.setMetadata("casting", casting);
 							TouhouMC_Races_Basic.plugin0.getServer().getScheduler().scheduleSyncDelayedTask(TouhouMC_Races_Basic.plugin0, new Runnable() {
 								public void run() {
 									Races_YUS.kibito_venom(pl, TouhouMC_Races_Basic.plugin0);
@@ -553,6 +556,8 @@ public class Races_EventActionListener implements Listener {
 							TouhouMC_Races_Basic.SaveTMCConfig();
 							pl.getWorld().playSound(pl.getLocation(), Sound.SUCCESSFUL_HIT, 1, 1);
 							pl.sendMessage(pluginpre + ChatColor.GREEN + "霊力" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
+							MetadataValue casting = new FixedMetadataValue(TouhouMC_Races_Basic.plugin0, Boolean.valueOf(true));
+							pl.setMetadata("casting", casting);
 							TouhouMC_Races_Basic.plugin0.getServer().getScheduler().scheduleSyncDelayedTask(TouhouMC_Races_Basic.plugin0, new Runnable() {
 								public void run() {
 									Races_YUS.egosatori_vanished(pl, TouhouMC_Races_Basic.plugin0);
@@ -567,7 +572,7 @@ public class Races_EventActionListener implements Listener {
 				///四季妖の死毒散布（書き込み有）（前置詞有(詠唱有)
 				mana = 65;
 				if (race.equalsIgnoreCase("sikiyou")){
-					if(handitem == Material.STONE_SPADE && (pl.isSneaking())){
+					if(handitem == Material.GOLD_SPADE && (pl.isSneaking())){
 						if(Races_Global.magic_iscastable(pl , mana,"花は開きつつある！")){
 							conf.set("user." + pl.getUniqueId() + ".spilit", conf.getDouble("user." + pl.getUniqueId() + ".spilit") - mana);
 							TouhouMC_Races_Basic.SaveTMCConfig();
@@ -627,7 +632,7 @@ public class Races_EventActionListener implements Listener {
 				//TODO 怪力乱神
 				//衝撃波（書き込み有）（前置詞有(詠唱有)
 				if (race.equalsIgnoreCase("kairikirannsin") ) {
-					if(handitem == Material.IRON_PICKAXE && (pl.isSneaking())){
+					if(handitem == Material.GOLD_PICKAXE && (pl.isSneaking())){
 						if(Races_Global.magic_iscastable(pl , mana,"片足を構えた！")){
 							MetadataValue casting = new FixedMetadataValue(TouhouMC_Races_Basic.plugin0, Boolean.valueOf(true));
 							pl.setMetadata("casting", casting);
@@ -954,7 +959,7 @@ public class Races_EventActionListener implements Listener {
 				mana = 15;
 				//TODO 龍魚
 				//龍魚の電流(書き込み有）(詠唱有)
-				if (race.equalsIgnoreCase("sinnzyuu") ) {
+				if (race.equalsIgnoreCase("ryuugyo") ) {
 					if(handitem == Material.FLINT_AND_STEEL && (pl.isSneaking())){
 						if(Races_Global.magic_iscastable(pl , mana,"ポーズを構えた！")){
 							MetadataValue casting = new FixedMetadataValue(TouhouMC_Races_Basic.plugin0, Boolean.valueOf(true));
@@ -976,29 +981,25 @@ public class Races_EventActionListener implements Listener {
 			}
 		}
 	}
-	//TODO エゴ効果
-	@EventHandler(priority=EventPriority.MONITOR)
-	public void vanishedInteractEntity(final PlayerInteractEntityEvent e){
-		if (e.getPlayer().hasMetadata("vanished"))
-		{
-			e.setCancelled(true);
-		}
-	}
+
 	
 	//クリック関連の処理(Entity)
 	@EventHandler
 	public void onPlayerInteractEntity(final PlayerInteractEntityEvent e){
-		if (!e.isCancelled())
-		{
 			//非人間村人規制前置詞有
 			int mana = 0;
 			final Player pl = e.getPlayer();
+			if (!pl.hasMetadata("vanished"))
+			{
 			Material handitem = pl.getItemInHand().getType();
 			String race = conf.getString("user." + pl.getUniqueId() + ".race").toString();
 			if (race.equalsIgnoreCase("mugennzin") == false && race.equalsIgnoreCase("tukibito") == false && race.equalsIgnoreCase("makaizin") == false && race.equalsIgnoreCase("ninngen") == false && race.equalsIgnoreCase("mazyo") == false && race.equalsIgnoreCase("houraizin") == false && race.equalsIgnoreCase("gennzinnsin") == false && race.equalsIgnoreCase("sibito") == false && race.equalsIgnoreCase("sennninn") == false && race.equalsIgnoreCase("makaizin") == false && race.equalsIgnoreCase("seizin") == false && race.equalsIgnoreCase("tennzin") == false && race.equalsIgnoreCase("kodaizin") == false && race.equalsIgnoreCase("tukibito") == false && race.equalsIgnoreCase("ennma") == false) {
-				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GRAY + "このニンゲンは何を話しているんだろう・・・");
-				pl.closeInventory();
-				e.setCancelled(true);
+				if (e.getRightClicked() instanceof Villager)
+				{
+					pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GRAY + "このニンゲンは何を話しているんだろう・・・");
+					pl.closeInventory();
+					e.setCancelled(true);
+				}
 			}
 			//鬼の埋め落とし（書き込み有）（前置詞有(詠唱有)
 			mana = 30;
@@ -1060,7 +1061,7 @@ public class Races_EventActionListener implements Listener {
 						pl.sendMessage(pluginpre + ChatColor.GREEN + "霊力" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
 						TouhouMC_Races_Basic.plugin0.getServer().getScheduler().scheduleSyncDelayedTask(TouhouMC_Races_Basic.plugin0, new Runnable() {
 							public void run() {
-								Races_AKM.kyuuketuki_drain(pl, TouhouMC_Races_Basic.plugin0, e, entity);
+								Races_AKM.kinnima_kyuttosite(pl, TouhouMC_Races_Basic.plugin0, e, entity);
 								MetadataValue casting = new FixedMetadataValue(TouhouMC_Races_Basic.plugin0, Boolean.valueOf(false));
 								pl.setMetadata("casting", casting);
 							}
@@ -1068,21 +1069,14 @@ public class Races_EventActionListener implements Listener {
 					}
 				}
 			}
-		}
+			}
 	}
-	//TODO エゴ効果
-	@EventHandler(priority=EventPriority.MONITOR)
-	public void vanishedEntityDamageByEntity(final EntityDamageByEntityEvent e){
-		if (e.getDamager().hasMetadata("vanished"))
-		{
-			e.setCancelled(true);
-		}
-	}
-	
 	@EventHandler
 	public void EntityDamageByEntity(EntityDamageByEntityEvent event) {
 		int mana = 30;
-		if (event.getDamager() instanceof Player && !event.isCancelled()) {
+		if (event.getDamager() instanceof Player ) {
+			if (!event.getDamager().hasMetadata("vanished"))
+			{
 			Player pl = (Player) event.getDamager();
 			int boost = pl.getMetadata("spilituse").get(0).asInt();
 			String race = conf.getString("user." + pl.getUniqueId() + ".race").toString();
@@ -1096,14 +1090,23 @@ public class Races_EventActionListener implements Listener {
 			if (race.equalsIgnoreCase("gennzinnsin") || race.equalsIgnoreCase("seizin") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
 				Races_NNG.gennzinnsin_luckyattack(pl, TouhouMC_Races_Basic.plugin0, event);
 			//悪魔
-			if (race.equalsIgnoreCase("akuma") || race.equalsIgnoreCase("kyuuketuki") || race.equalsIgnoreCase("kinnima") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
-				Races_AKM.akuma_dark_attack(pl, TouhouMC_Races_Basic.plugin0, event);
+			if (race.equalsIgnoreCase("akuma") || race.equalsIgnoreCase("kyuuketuki") || race.equalsIgnoreCase("kinnima"))
+				if (conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_AKM.akuma_dark_attack(pl, TouhouMC_Races_Basic.plugin0, event);
+				}
 			//鬼
-			if (race.equalsIgnoreCase("oni") || race.equalsIgnoreCase("kairikirannsin") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
-				Races_AKM.oni_closed_attack(pl, TouhouMC_Races_Basic.plugin0, event);
+			if (race.equalsIgnoreCase("oni") || race.equalsIgnoreCase("kairikirannsin"))
+				if(conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_AKM.oni_closed_attack(pl, TouhouMC_Races_Basic.plugin0, event);
+				}
 			//吸血鬼
-			if (race.equalsIgnoreCase("kyuuketuki") || race.equalsIgnoreCase("kinnima") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
-				Races_AKM.kyuuketuki_shadow_attack(pl, TouhouMC_Races_Basic.plugin0, event);
+			if (race.equalsIgnoreCase("kyuuketuki") || race.equalsIgnoreCase("kinnima"))
+				if(conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_AKM.kyuuketuki_shadow_attack(pl, TouhouMC_Races_Basic.plugin0, event);
+				}
 			//TODO 狂霊
 			if (race.equalsIgnoreCase("kyourei") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
 				Races_SIR.kyourei_berserker(pl, TouhouMC_Races_Basic.plugin0, event, boost);
@@ -1111,11 +1114,17 @@ public class Races_EventActionListener implements Listener {
 			if (race.equalsIgnoreCase("gyokuto") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
 				Races_YUZ.gyokuto_ranged_attack(pl, TouhouMC_Races_Basic.plugin0, event);
 			//神
-			if (race.equalsIgnoreCase("kami") || race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("yakusin") || race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin") || race.equalsIgnoreCase("tukumogami") || race.equalsIgnoreCase("sinigami") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
-				Races_KAM.kami_faith_attack(pl, TouhouMC_Races_Basic.plugin0, event, boost, conf);
+			if (race.equalsIgnoreCase("kami") || race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("yakusin") || race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin") || race.equalsIgnoreCase("tukumogami") || race.equalsIgnoreCase("sinigami"))
+				if(conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_KAM.kami_faith_attack(pl, TouhouMC_Races_Basic.plugin0, event, boost, conf);
+				}
 			//豊穣神
-			if (race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
-				Races_KAM.houzyousin_potato(pl, TouhouMC_Races_Basic.plugin0, event, boost);
+			if (race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin"))
+				if(conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_KAM.houzyousin_potato(pl, TouhouMC_Races_Basic.plugin0, event, boost);
+				}
 			//TODO 死神
 			if (race.equalsIgnoreCase("sinigami") && conf.getInt("user." + pl.getUniqueId() + ".split") >= 50)
 				Races_KAM.sinigami_deathhall(pl, TouhouMC_Races_Basic.plugin0, event, conf);
@@ -1133,7 +1142,11 @@ public class Races_EventActionListener implements Listener {
 			int boost = pl.getMetadata("spilituse").get(0).asInt();
 			String race = conf.getString("user." + pl.getUniqueId() + ".race").toString();
 			//蓬莱人
-			if (race.equalsIgnoreCase("houraizin") || race.equalsIgnoreCase("tukibito") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana) Races_NNG.houraizin_reverselife_Entity(pl, TouhouMC_Races_Basic.plugin0, event);
+			if (race.equalsIgnoreCase("houraizin") || race.equalsIgnoreCase("tukibito"))
+				if (conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_NNG.houraizin_reverselife_Entity(pl, TouhouMC_Races_Basic.plugin0, event);
+				}
 			//TODO 聖人
 			if (race.equalsIgnoreCase("seizin") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
 				Races_NNG.seizin_luckydefence(pl, TouhouMC_Races_Basic.plugin0, event);
@@ -1144,7 +1157,13 @@ public class Races_EventActionListener implements Listener {
 			if (race.equalsIgnoreCase("kodaizin") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
 				Races_NNG.kodaizin_anti_chain(pl, TouhouMC_Races_Basic.plugin0, event);
 			//妖精 (小人除く)
-			if (race.equalsIgnoreCase("yousei") || race.equalsIgnoreCase("satori") || race.equalsIgnoreCase("kibito") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana) Races_YUS.yousei_glaze(pl, TouhouMC_Races_Basic.plugin0, event);
+			if (race.equalsIgnoreCase("yousei") || race.equalsIgnoreCase("satori") || race.equalsIgnoreCase("kibito"))
+			{
+				if(conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_YUS.yousei_glaze(pl, TouhouMC_Races_Basic.plugin0, event);
+				}
+			}
 			//小人
 			else if (race.equalsIgnoreCase("kobito")&& conf.getInt("user." + pl.getUniqueId() + ".split") >= mana) Races_YUS.kobito_glaze(pl, TouhouMC_Races_Basic.plugin0, event);
 			//TODO 地獄妖精
@@ -1162,11 +1181,19 @@ public class Races_EventActionListener implements Listener {
 			//地縛霊
 			if (race.equalsIgnoreCase("zibakurei")&& conf.getInt("user." + pl.getUniqueId() + ".split") >= 50) Races_SIR.zibakurei_always_unvanish(pl, TouhouMC_Races_Basic.plugin0, event, boost);
 			//神
-			if (race.equalsIgnoreCase("kami") || race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("yakusin")|| race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin") || race.equalsIgnoreCase("tukumogami") || race.equalsIgnoreCase("sinigami") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
-				Races_KAM.kami_faith_defence(pl, TouhouMC_Races_Basic.plugin0, event, boost, conf);
+			if (race.equalsIgnoreCase("kami") || race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("yakusin")|| race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin") || race.equalsIgnoreCase("tukumogami") || race.equalsIgnoreCase("sinigami"))
+				if (conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_KAM.kami_faith_defence(pl, TouhouMC_Races_Basic.plugin0, event, boost, conf);
+				}
 			//厄神
-			if (race.equalsIgnoreCase("yakusin")  || race.equalsIgnoreCase("tukumogami") || race.equalsIgnoreCase("sinigami") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
-				Races_KAM.yakusin_darkside(pl, TouhouMC_Races_Basic.plugin0, event);
+			if (race.equalsIgnoreCase("yakusin")  || race.equalsIgnoreCase("tukumogami") || race.equalsIgnoreCase("sinigami"))
+			{
+				if (conf.getInt("user." + pl.getUniqueId() + ".split") >= mana)
+				{
+					Races_KAM.yakusin_darkside(pl, TouhouMC_Races_Basic.plugin0, event);
+				}
+			}
 			//付喪神
 			if (race.equalsIgnoreCase("tukumogami") && conf.getInt("user." + pl.getUniqueId() + ".split") >= 0)
 				Races_KAM.tukumogami_sadezumu(pl, TouhouMC_Races_Basic.plugin0, event, conf);
@@ -1177,7 +1204,7 @@ public class Races_EventActionListener implements Listener {
 					pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.RED + "貴方は霊力再生モードの為非常に柔いです！");
 				}
 			}
-		}
+		}}
 	}
 
 	//ダメージ関連の処理(攻撃以外含む)
@@ -1190,30 +1217,52 @@ public class Races_EventActionListener implements Listener {
 			int boost = pl.getMetadata("spilituse").get(0).asInt();
 			String race = conf.getString("user." + pl.getUniqueId() + ".race").toString();
 			//河童
-			if (race.equalsIgnoreCase("kappa") || race.equalsIgnoreCase("yamakappa") && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana){
-				if (e.getCause() == EntityDamageEvent.DamageCause.DROWNING) e.setCancelled(true);
+			if (race.equalsIgnoreCase("kappa") || race.equalsIgnoreCase("yamakappa")){
+				if (e.getCause() == EntityDamageEvent.DamageCause.DROWNING && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) e.setCancelled(true);
 			}
 			//天狗
-			if(race.equalsIgnoreCase("tenngu") || race.equalsIgnoreCase("karasutenngu") || race.equalsIgnoreCase("syoukaitenngu") && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana){
-				if (e.getCause() == EntityDamageEvent.DamageCause.FALL) Races_YUM.tenngu_toramporin(pl, TouhouMC_Races_Basic.plugin0, e);
+			if(race.equalsIgnoreCase("tenngu") || race.equalsIgnoreCase("karasutenngu") || race.equalsIgnoreCase("syoukaitenngu")){
+				if (e.getCause() == EntityDamageEvent.DamageCause.FALL && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_YUM.tenngu_toramporin(pl, TouhouMC_Races_Basic.plugin0, e);
 			}
 			//妖精
-			if (race.equalsIgnoreCase("yousei") || race.equalsIgnoreCase("kobito") || race.equalsIgnoreCase("kibito") || race.equalsIgnoreCase("satori") || race.equalsIgnoreCase("kyozin") || race.equalsIgnoreCase("egosatori") || race.equalsIgnoreCase("zigokuyousei") || race.equalsIgnoreCase("sikiyou") && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_YUS.yousei_fall_protection(pl, TouhouMC_Races_Basic.plugin0, e);
+			if (race.equalsIgnoreCase("yousei") || race.equalsIgnoreCase("kobito") || race.equalsIgnoreCase("kibito") || race.equalsIgnoreCase("satori") || race.equalsIgnoreCase("kyozin") || race.equalsIgnoreCase("egosatori") || race.equalsIgnoreCase("zigokuyousei") || race.equalsIgnoreCase("sikiyou"))
+				{
+					if (e.getCause() == EntityDamageEvent.DamageCause.FALL && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_YUS.yousei_fall_protection(pl, TouhouMC_Races_Basic.plugin0, e);
+				}
 			//悪魔
-			if (race.equalsIgnoreCase("akuma")|| race.equalsIgnoreCase("oni")|| race.equalsIgnoreCase("kyuuketuki")|| race.equalsIgnoreCase("kinnima")|| race.equalsIgnoreCase("kairikirannsin")&& conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_AKM.akuma_antiheat_body(pl, TouhouMC_Races_Basic.plugin0, e);
+			if (race.equalsIgnoreCase("akuma")|| race.equalsIgnoreCase("oni")|| race.equalsIgnoreCase("kyuuketuki")|| race.equalsIgnoreCase("kinnima")|| race.equalsIgnoreCase("kairikirannsin"))
+				{
+				 if (conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_AKM.akuma_antiheat_body(pl, TouhouMC_Races_Basic.plugin0, e);
+				}
 			//吸血鬼
-			if (race.equalsIgnoreCase("kyuuketuki")||race.equalsIgnoreCase("kinnima")  && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_AKM.kyuuketuki_antiallfire_body(pl, TouhouMC_Races_Basic.plugin0, e);
+			if (race.equalsIgnoreCase("kyuuketuki")||race.equalsIgnoreCase("kinnima") ){
+				if(conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_AKM.kyuuketuki_antiallfire_body(pl, TouhouMC_Races_Basic.plugin0, e);
+			}
 			//精霊
-			if (race.equalsIgnoreCase("seirei")||race.equalsIgnoreCase("hannrei")||race.equalsIgnoreCase("sourei")||race.equalsIgnoreCase("onnryou") ||race.equalsIgnoreCase("sinnrei")||race.equalsIgnoreCase("saigyouyou")||race.equalsIgnoreCase("zibakurei")||race.equalsIgnoreCase("kyourei") && conf.getInt("user." + pl.getUniqueId() + ".split") >= mana && (pl.isSneaking()) ) Races_SIR.seirei_mighty_guard(pl, TouhouMC_Races_Basic.plugin0, e, boost);
+			if (race.equalsIgnoreCase("seirei")||race.equalsIgnoreCase("hannrei")||race.equalsIgnoreCase("sourei")||race.equalsIgnoreCase("onnryou") ||race.equalsIgnoreCase("sinnrei")||race.equalsIgnoreCase("saigyouyou")||race.equalsIgnoreCase("zibakurei")||race.equalsIgnoreCase("kyourei") )
+			{
+				if (conf.getInt("user." + pl.getUniqueId() + ".split") >= mana && (pl.isSneaking())) Races_SIR.seirei_mighty_guard(pl, TouhouMC_Races_Basic.plugin0, e, boost);
+			}
 			//TODO 西行妖
 			if(race.equalsIgnoreCase("saigyouyou") && conf.getInt("user." + pl.getUniqueId() + ".spilit") <= 40){
 				if (e.getDamage() >= pl.getHealth()) Races_SIR.saigyou_kotyouran(pl, TouhouMC_Races_Basic.plugin0);
 			}
 			//豊穣神
-			if (race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin") && conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_KAM.houzyousin_feed(pl, TouhouMC_Races_Basic.plugin0, e);
+			if (race.equalsIgnoreCase("houzyousin") || race.equalsIgnoreCase("tyuuousin") || race.equalsIgnoreCase("dotyakusin")) {
+				if (conf.getInt("user." + pl.getUniqueId() + ".spilit") >= mana) Races_KAM.houzyousin_feed(pl, TouhouMC_Races_Basic.plugin0, e);
+			}
 		}
+		else if (ent instanceof Snowman && ent.hasMetadata("syugoreisnow")) e.setCancelled(true);
+		else if (ent instanceof IronGolem && ent.hasMetadata("syugoreiiron")) e.setCancelled(true);
+		else if (ent instanceof Wolf && ent.hasMetadata("tamedwolf")) e.setDamage(1D);
+		else if (ent instanceof Ocelot && ent.hasMetadata("tamedcat")) e.setDamage(1D);
+		else if (ent instanceof Horse && ent.hasMetadata("tamedhorse")) e.setDamage(1D);
 	}
-
+		@EventHandler
+		public void onHorseDied(EntityDeathEvent event) {
+			if (event.getEntity() instanceof Horse && event.getEntity().hasMetadata("tamedhorse")) event.getDrops().clear();
+		}
+		
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent event) {
 		Player pl = event.getPlayer();
@@ -1221,13 +1270,16 @@ public class Races_EventActionListener implements Listener {
 		int mana = 0;
 		//人魚高水泳書き込み有）（ブースター処有
 		mana = 1;
-		if (race.equalsIgnoreCase("ninngyo")|| race.equalsIgnoreCase("ryuugyo") && conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana) {
-			int boost = 0;
-			if (pl.getMetadata("spilituse").get(0).asInt() > 0) boost = 1;
-			Races_YUZ.ninngyo_swimming(pl, TouhouMC_Races_Basic.plugin0, boost);
-			if (boost == 1){
-				conf.set("user." + pl.getUniqueId() + ".spilit", conf.getDouble("user." + pl.getUniqueId() + ".spilit") - mana);
-				TouhouMC_Races_Basic.SaveTMCConfig();
+		if (race.equalsIgnoreCase("ninngyo")|| race.equalsIgnoreCase("ryuugyo")) {
+			if (conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana)
+			{
+				int boost = 0;
+				if (pl.getMetadata("spilituse").get(0).asInt() > 0) boost = 1;
+				Races_YUZ.ninngyo_swimming(pl, TouhouMC_Races_Basic.plugin0, boost);
+				if (boost == 1){
+					conf.set("user." + pl.getUniqueId() + ".spilit", conf.getDouble("user." + pl.getUniqueId() + ".spilit") - mana);
+					TouhouMC_Races_Basic.SaveTMCConfig();
+			}
 			}
 		}
 		
@@ -1252,12 +1304,15 @@ public class Races_EventActionListener implements Listener {
 		int mana = 0;
 		//妖精羽ばたき
 		mana = 5;
-		if (race.equalsIgnoreCase("yousei") || race.equalsIgnoreCase("kobito") || race.equalsIgnoreCase("kibito") || race.equalsIgnoreCase("satori") || race.equalsIgnoreCase("kyozin") || race.equalsIgnoreCase("egosatori") || race.equalsIgnoreCase("zigokuyousei") || race.equalsIgnoreCase("sikiyou") && conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana){
-			if (!pl.isOnGround() && pl.isSneaking() && conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana ){
-				Races_YUS.yousei_feather(pl, TouhouMC_Races_Basic.plugin0);
-				conf.set("user." + pl.getUniqueId() + ".spilit", conf.getDouble("user." + pl.getUniqueId() + ".spilit") - mana);
-				TouhouMC_Races_Basic.SaveTMCConfig();
-				pl.sendMessage(pluginpre + ChatColor.GREEN + "霊力" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
+		if (race.equalsIgnoreCase("yousei") || race.equalsIgnoreCase("kobito") || race.equalsIgnoreCase("kibito") || race.equalsIgnoreCase("satori") || race.equalsIgnoreCase("kyozin") || race.equalsIgnoreCase("egosatori") || race.equalsIgnoreCase("zigokuyousei") || race.equalsIgnoreCase("sikiyou")){
+			if(conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana)
+			{
+				if (!pl.isOnGround() && pl.isSneaking() && conf.getDouble("user." + pl.getUniqueId() + ".spilit") >= mana ){
+					Races_YUS.yousei_feather(pl, TouhouMC_Races_Basic.plugin0);
+					conf.set("user." + pl.getUniqueId() + ".spilit", conf.getDouble("user." + pl.getUniqueId() + ".spilit") - mana);
+					TouhouMC_Races_Basic.SaveTMCConfig();
+					pl.sendMessage(pluginpre + ChatColor.GREEN + "霊力" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
+				}
 			}
 		}
 		//仙人の壁抜

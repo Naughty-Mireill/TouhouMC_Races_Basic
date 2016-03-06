@@ -127,12 +127,19 @@ public class Races_YUM extends JavaPlugin {
 	//TODO スキマ妖
 	public static void sukima_sukima_warp(Player pl, Plugin plugin){
 		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GOLD + "スキマを開き自身の殺人に出会おう！");
+		if (pl.getKiller() != null)
+		{
 		pl.teleport(pl.getKiller());
 		pl.getWorld().playSound(pl.getLocation(), Sound.PORTAL_TRIGGER, 1.0F, 2.0F);
 		if (pl.getKiller() instanceof Player)
 		{
 			((Player)pl).getKiller().sendMessage("ハローキラー☆");
 			((Player)pl).getKiller().addPotionEffect(new PotionEffect (PotionEffectType.BLINDNESS , 100 , 1));
+		}
+		}
+		else
+		{
+			pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.RED + "いなかった！");
 		}
 	}
 	
@@ -181,7 +188,7 @@ public class Races_YUM extends JavaPlugin {
 			List<Entity> enemys=pl.getNearbyEntities(scentarea, scentarea, scentarea);
 			for (Entity enemy : enemys){
 				if (enemy instanceof Player && enemy.isDead() == false){
-					((Player) enemy).getWorld().playEffect(((Player) enemy).getLocation().add(0D, 10D,0D), Effect.NOTE, 1);
+					((Player) enemy).getWorld().playEffect(((Player) enemy).getLocation().add(0D, 6D,0D), Effect.NOTE, 1);
 				}
 			}
 	}

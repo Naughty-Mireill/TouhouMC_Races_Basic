@@ -224,8 +224,8 @@ public class Races_NNG extends JavaPlugin {
 				if (!no_damage)
 				{
 				Location location =enemy.getLocation();
-				Vector velocity=new Vector(0D,-16D,0D);
-				Entity firevall =pl.getWorld().spawnEntity(location.add(0D, 64D, 0D), EntityType.FIREBALL);
+				Vector velocity=new Vector(0D,-3D,0D);
+				Entity firevall =pl.getWorld().spawnEntity(location.add(0D, 32D, 0D), EntityType.FIREBALL);
 				MetadataValue shooter = new FixedMetadataValue(plugin, pl.getUniqueId().toString()) ;
 				MetadataValue fireeffect = new FixedMetadataValue(plugin, 30D) ;
 				firevall.setMetadata("meteoreffect", fireeffect);
@@ -286,7 +286,7 @@ public class Races_NNG extends JavaPlugin {
 				}
 				if (!no_damage)
 				{
-				enemy.setVelocity(enemy.getVelocity().add(new Vector(Math.random() * 10,Math.random() * 10,Math.random() * 10)));
+				enemy.setVelocity(enemy.getVelocity().add(new Vector(Math.random() * 3,Math.random() * 3,Math.random() * 3)));
 				}
 			}
 		}
@@ -372,7 +372,7 @@ public class Races_NNG extends JavaPlugin {
 				{
 					if (pl.getMetadata("mugen_locw").get(0).asString().equals(pl.getWorld().getName())){
 						pl.getWorld().playSound(pl.getLocation(), Sound.ENDERMAN_TELEPORT, 1, 2);
-						pl.teleport(new Location(pl.getWorld(), pl.getMetadata("mugen_locx").get(0).asDouble(),pl.getMetadata("mugen_locx").get(0).asDouble(),pl.getMetadata("mugen_locx").get(0).asDouble()));
+						pl.teleport(new Location(pl.getWorld(), pl.getMetadata("mugen_locx").get(0).asDouble(),pl.getMetadata("mugen_locy").get(0).asDouble(),pl.getMetadata("mugen_locz").get(0).asDouble()));
 					}
 					else
 					{

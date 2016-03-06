@@ -8,7 +8,6 @@ import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.TouhouMC_Races_Basic;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,7 +20,6 @@ import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowman;
 import org.bukkit.entity.Wolf;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 //import org.bukkit.plugin.java.JavaPlugin;
@@ -49,27 +47,6 @@ public class Races_Schedule{
 							}
 					
 						}, 10L);
-					}
-					if (player.hasMetadata("batman")) {
-						for (final LivingEntity bat : Bukkit.getWorld(player.getWorld().getName()).getEntitiesByClass(Bat.class)) {
-							if (bat.hasMetadata("invincible")) {
-								if (((MetadataValue)player.getMetadata("batman").get(0)).asString().toString().contains(((MetadataValue)bat.getMetadata("invincible").get(0)).asString().toString())) {
-									plugin0.getServer().getScheduler().scheduleSyncDelayedTask(plugin0, new Runnable(){
-										private Plugin manager = TouhouMC_Races_Basic.plugin0;
-										public void run(){
-											player.teleport(bat);
-											player.setGameMode(GameMode.SURVIVAL);
-											MetadataValue usingmagic = new FixedMetadataValue(this.manager, Boolean.valueOf(false));
-											player.setMetadata("using-magic", usingmagic);
-											player.removeMetadata("batman", this.manager);
-											player.sendMessage(thrpre0 + ChatColor.RED + "バンプカモフラージュの効果が切れました");
-											bat.removeMetadata("invincible", this.manager);
-											bat.damage(1000.0D);
-										}
-									}, 100L);
-								}
-							}
-						}
 					}
 					if ((conf.getDouble("user." + player.getUniqueId() + ".spilit") < 100.0D) && (((MetadataValue)player.getMetadata("spilituse").get(0)).asDouble() == 0.0D)){
 						conf.set("user." + player.getUniqueId() + ".spilit", Double.valueOf(conf.getDouble("user." + player.getUniqueId() + ".spilit") + 1.0D));
@@ -110,8 +87,6 @@ public class Races_Schedule{
 								} else {
 									player.setHealth(5.0D + player.getHealth());
 								}
-							}else if (!player.isDead()) {
-								player.playSound(player.getLocation(), Sound.NOTE_BASS_GUITAR, 1.0F, 2.0F);
 							}
 						}else if (!player.isDead()) {
 							if (player.getHealth() > player.getMaxHealth() - 1.0D) {
@@ -156,36 +131,45 @@ public class Races_Schedule{
 							player.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, 2000, 0));
 						}
 					}
-					if ((race.contains("gyokuto"))  || (race.contains("sinnzyuu"))  || (race.contains("zyuuzin")) && (player.getWorld().getTime() >= 16000L)){
-						if (!player.hasPotionEffect(PotionEffectType.SPEED)) {
+					if ((race.contains("gyokuto"))  || (race.contains("sinnzyuu"))  || (race.contains("zyuuzin")) ){
+						if ((player.getWorld().getTime() >= 16000L))
+						{
+							if (!player.hasPotionEffect(PotionEffectType.SPEED)) {
+								player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 2000, 1));
+							}
+							player.removePotionEffect(PotionEffectType.JUMP);
+							player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+							player.removePotionEffect(PotionEffectType.REGENERATION);
+							player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 2000, 0));
+							player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 2000, 0));
+							player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 2000, 0));
+						}
+					}
+					if ((race.contains("gyokuto"))  || (race.contains("sinnzyuu"))  || (race.contains("zyuuzin")) ){
+						if((player.getWorld().getTime() >= 16000L) && (player.getWorld().getTime() < 16040L))
+						{
+							player.sendMessage(thrpre0 + ChatColor.RED + "あなたは獣の血を呼び覚ました！！");
+							player.playSound(player.getLocation(), Sound.WOLF_DEATH, 1.0F, -1.0F);
+						}
+					}
+					if ((race.contains("kinnima")) || (race.contains("kyuuketuki"))){
+						if ( (player.getWorld().getTime() >= 14000L))
+						{
+							player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+							player.removePotionEffect(PotionEffectType.INCREASE_DAMAGE);
+							if (!player.hasPotionEffect(PotionEffectType.SPEED)) {
+								player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 2000, 1));
+							}
+							player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 2000, 0));
+							player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 2000, 0));
 							player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 2000, 1));
 						}
-						player.removePotionEffect(PotionEffectType.JUMP);
-						player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-						player.removePotionEffect(PotionEffectType.REGENERATION);
-						player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 2000, 0));
-						player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 2000, 0));
-						player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 2000, 0));
-					}
-					if ((race.contains("gyokuto"))  || (race.contains("sinnzyuu"))  || (race.contains("zyuuzin")) && (player.getWorld().getTime() >= 16000L) && (player.getWorld().getTime() < 16100L)){
-						player.sendMessage(thrpre0 + ChatColor.RED + "あなたは獣の血を呼び覚ました！！");
-						player.playSound(player.getLocation(), Sound.WOLF_DEATH, 1.0F, -1.0F);
-					}
-					if ((race.contains("kinnima")) || (race.contains("kyuuketuki")) && (player.getWorld().getTime() >= 14000L)){
-						player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-						player.removePotionEffect(PotionEffectType.INCREASE_DAMAGE);
-						if (!player.hasPotionEffect(PotionEffectType.SPEED)) {
-							player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 2000, 1));
-						}
-						player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 2000, 0));
-						player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 2000, 0));
-						player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 2000, 1));
 					}else if ((race.contains("kinnima")) || race.contains("kyuuketuki")){
 						player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 2000, 0));
 					}
 				}
 			}
-		}.runTaskTimer(plugin0, 0, 35L);
+		}.runTaskTimer(plugin0, 0, 40L);
 		return ;
 	}
 	public void run3(final Plugin plugin0, String thrpre0){

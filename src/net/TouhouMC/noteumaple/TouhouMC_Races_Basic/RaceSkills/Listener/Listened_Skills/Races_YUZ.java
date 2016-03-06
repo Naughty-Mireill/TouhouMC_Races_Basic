@@ -274,7 +274,7 @@ public class Races_YUZ extends JavaPlugin {
 				}
 				if (!no_damage)
 				{
-				if (enemy.getLocation().getBlock().getType() == Material.WATER && enemy.getLocation().getBlock().getType() == Material.STATIONARY_WATER)
+				if (enemy.getLocation().getBlock().getType() == Material.WATER || enemy.getLocation().getBlock().getType() == Material.STATIONARY_WATER)
 				{
 					((LivingEntity)enemy).damage(10D);
 					if (enemy instanceof Player ) ((Player)enemy).sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.YELLOW + "ビリビリ！！");

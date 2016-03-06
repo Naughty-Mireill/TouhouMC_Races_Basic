@@ -112,7 +112,7 @@ public class Races_YUS extends JavaPlugin {
 	}
 	
 	public static void yousei_fall_protection(Player pl, Plugin plugin, EntityDamageEvent event){
-		if (event.getCause() == EntityDamageEvent.DamageCause.FALL) event.setDamage(event.getDamage() / 2.0D);
+		event.setDamage(event.getDamage() / 2.0D);
 	}
 
 	public static void satori_satori(Player pl, Plugin plugin, EntityDamageByEntityEvent event){
