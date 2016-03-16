@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 race:
   kedama:
     tag: "\xa70GRZ"
@@ -34,3 +35,41 @@ race:
       skills:
       - ''
 user: []
+=======
+race:
+  kedama:
+    tag: "\xa70GRZ"
+    real: "\xa70\u5916\u6765\u4eba"
+    root: "\u306a\u3057"
+    rank: 0
+    evol:
+      needpoint: 0
+      costitemid: 0
+      costitemmeta: 0
+      costitemamount: 0
+      rewarditemid: 0
+      rewarditemmeta: 0
+      rewarditemamount: 0
+    intro:
+      story: ''
+      skills:
+      - ''
+  ninngen:
+    tag: "\xa7cNNG"
+    real: "\xa7c\u4eba\u9593"
+    root: kedama
+    rank: 1
+    evol:
+      needpoint: 0
+      costitemid: 0
+      costitemmeta: 0
+      costitemamount: 0
+      rewarditemid: 0
+      rewarditemmeta: 0
+      rewarditemamount: 0
+    intro:
+      story: ''
+      skills:
+      - ''
+user: []
+>>>>>>> origin/master
