@@ -13,6 +13,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Team;
 
 public class Races_Global extends JavaPlugin implements Listener {
 
@@ -70,5 +71,22 @@ public class Races_Global extends JavaPlugin implements Listener {
 				p.setNoDamageTicks(tick);
 			}
 		}, wait);
+	}
+	
+	@SuppressWarnings({ "deprecation" })
+	public static boolean No_Team_Friendly_Fire(Plugin plugin, Player damager,Player victim)
+	{
+		Team damagerTeam = Bukkit.getScoreboardManager().getMainScoreboard().getPlayerTeam(damager);
+		Team victimTeam = Bukkit.getScoreboardManager().getMainScoreboard().getPlayerTeam(victim);
+		if (damagerTeam != null && victimTeam != null)
+		{
+			if (damagerTeam.getName().equalsIgnoreCase(victimTeam.getName()))
+			{
+				if (damagerTeam.allowFriendlyFire() == false){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

@@ -1,6 +1,9 @@
 package net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Listener.Listened_Skills;
 
+import java.util.List;
+
 import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.TouhouMC_Races_Basic;
+import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Races_Global;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -9,15 +12,17 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 public class Races_YUZ extends JavaPlugin {
 	//召喚スキル系
@@ -37,7 +42,7 @@ public class Races_YUZ extends JavaPlugin {
 					Entity wolf = pl.getWorld().spawnEntity(pl.getLocation(), EntityType.WOLF);
 					MetadataValue tamedwolf = new FixedMetadataValue(plugin, Boolean.valueOf(true));
 					wolf.setMetadata("tamedwolf", tamedwolf);
-					MetadataValue wolfowner = new FixedMetadataValue(plugin, pl.getUniqueId());
+					MetadataValue wolfowner = new FixedMetadataValue(plugin, pl.getUniqueId().toString());
 					wolf.setMetadata("wolfowner", wolfowner);
 					n++;
 				}
@@ -51,7 +56,7 @@ public class Races_YUZ extends JavaPlugin {
 	public static void siki_summon_oc(final Player pl, final Plugin plugin, PlayerInteractEvent event){
 		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
 		pl.setMetadata("using-magic", usingmagic);
-		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GRAY + "愛くるしい猫を呼び出すニャア");
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GRAY + "愛くるしい猫達を呼び出すニャア");
 		pl.getWorld().playSound(pl.getLocation(), Sound.CAT_MEOW, 4.0F, -1.0F);
 		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
 			public void run(){
@@ -62,7 +67,7 @@ public class Races_YUZ extends JavaPlugin {
 					Entity cat = pl.getWorld().spawnEntity(pl.getLocation(), EntityType.OCELOT);
 					MetadataValue tamedcat = new FixedMetadataValue(plugin, Boolean.valueOf(true));
 					cat.setMetadata("tamedcat", tamedcat);
-					MetadataValue catowner = new FixedMetadataValue(plugin, pl.getUniqueId());
+					MetadataValue catowner = new FixedMetadataValue(plugin, pl.getUniqueId().toString());
 					cat.setMetadata("catowner", catowner);
 					n++;
 				}
@@ -71,7 +76,29 @@ public class Races_YUZ extends JavaPlugin {
 			}
 		}, 40L);
 	}
-
+	//TODO 九尾
+	//馬召喚(式)
+	public static void kyuubi_summon_horse(final Player pl, final Plugin plugin, PlayerInteractEvent event){
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+		pl.setMetadata("using-magic", usingmagic);
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GRAY + "律儀正しい馬を呼び出すヒヒーン");
+		pl.getWorld().playSound(pl.getLocation(), Sound.HORSE_GALLOP, 4.0F, 0.0F);
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+				pl.setMetadata("using-magic", usingmagic);
+				Entity horse = pl.getWorld().spawnEntity(pl.getLocation(), EntityType.HORSE);
+				MetadataValue tamedhorse = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+				horse.setMetadata("tamedhorse", tamedhorse);
+				MetadataValue horseowner = new FixedMetadataValue(plugin, pl.getUniqueId().toString());
+				horse.setMetadata("horseowner", horseowner);
+				horse.setCustomName(pl.getName() + "'s horse");
+				pl.getWorld().playSound(pl.getLocation(), Sound.HORSE_SADDLE, 1.0F, -1.0F);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GOLD + "「ひゅい！？（違）」");
+			}
+		}, 100L);
+	}
+	
 	//攻撃スキル系
 	//霊力消費で強化
 	public static void youzyu_gainenergy(Player pl, final Plugin plugin, final PlayerInteractEvent event){
@@ -164,7 +191,7 @@ public class Races_YUZ extends JavaPlugin {
 	}
 
 	////アクブスキル系
-	public static void ninngyo_swimming(Player pl, final Plugin plugin, final PlayerMoveEvent event, int boost){
+	public static void ninngyo_swimming(Player pl, final Plugin plugin, int boost){
 		///移動スキル系
 		if (pl.getLocation().getBlock().getType() == Material.WATER || pl.getLocation().getBlock().getType() == Material.STATIONARY_WATER){
 			if (boost == 1){
@@ -174,4 +201,80 @@ public class Races_YUZ extends JavaPlugin {
 			}
 		}
 	}
+	
+	//TODO 玉兎
+	public static void gyokuto_ranged_attack(Player pl, Plugin plugin,EntityDamageByEntityEvent event){
+		if (pl.getLocation().distanceSquared(event.getEntity().getLocation()) >= 12){
+			event.setDamage(event.getDamage() + 2.0D);
+			event.getDamager().getWorld().playEffect(event.getEntity().getLocation(), Effect.SPLASH, 1);
+		}
+	}
+	
+	//TODO 神獣
+	public static void sinnzyuu_voice(final Player pl,final Plugin plugin){
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GOLD + "うなる咆哮！！");
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.WOLF_GROWL, 8.0F, -1.0F);
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.WOLF_GROWL, 8.0F, 0.0F);
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.WOLF_GROWL, 8.0F, 1.0F);
+		List<Entity> enemys = pl.getNearbyEntities(90.0D, 90.0D, 90.0D);
+		for (Entity enemy : enemys) {
+			if (((enemy instanceof LivingEntity))){
+				boolean no_damage = false;
+				if (enemy instanceof Player)
+				{
+					no_damage = Races_Global.No_Team_Friendly_Fire(plugin, pl, (Player) enemy);
+				}
+				if (!no_damage)
+				{
+				((LivingEntity)enemy).setVelocity(new Vector (0,0,0));
+				enemy.getLocation().getWorld().playSound(enemy.getLocation(), Sound.DONKEY_HIT, 1.0F, 1.0F);
+				}
+			}
+		}
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+		pl.setMetadata("using-magic", usingmagic);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+				pl.setMetadata("using-magic", usingmagic);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
+			}
+		}, 120L);
+	}
+	
+	//TODO 龍魚
+	public static void ryuugyo_volt(final Player pl,final Plugin plugin){
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GOLD + "電流を水上に流した！");
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.NOTE_BASS_DRUM, 2.0F, 2.0F);
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.NOTE_BASS_DRUM, 2.0F, 1.0F);
+		List<Entity> enemys = pl.getNearbyEntities(50.0D, 50.0D, 50.0D);
+		for (Entity enemy : enemys) {
+			if (((enemy instanceof LivingEntity)) ){
+				boolean no_damage = false;
+				if (enemy instanceof Player)
+				{
+					no_damage = Races_Global.No_Team_Friendly_Fire(plugin, pl, (Player) enemy);
+				}
+				if (!no_damage)
+				{
+				if (enemy.getLocation().getBlock().getType() == Material.WATER || enemy.getLocation().getBlock().getType() == Material.STATIONARY_WATER)
+				{
+					((LivingEntity)enemy).damage(10D);
+					if (enemy instanceof Player ) ((Player)enemy).sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.YELLOW + "ビリビリ！！");
+					enemy.getLocation().getWorld().playSound(enemy.getLocation(), Sound.HORSE_ZOMBIE_HIT, 1.0F, 2.0F);
+				}
+				}
+			}
+		}
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+		pl.setMetadata("using-magic", usingmagic);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+				pl.setMetadata("using-magic", usingmagic);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
+			}
+		}, 40L);
+	}
+	
 }

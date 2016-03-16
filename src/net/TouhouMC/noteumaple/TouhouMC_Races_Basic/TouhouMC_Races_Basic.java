@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Listener.CrackShotListener;
 import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Listener.Races_EventActionListener;
 import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Listener.Races_SkillMiscListener;
+import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Schedule.Nametag_Schedule;
 import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Schedule.Races_Schedule;
 
 import org.bukkit.Bukkit;
@@ -63,18 +65,24 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 		schedule.run2(plugin0,thpre0);
 		schedule.run3(plugin0,thpre0);
 		//フック設定
-		if (this.getConfig().getBoolean("enable-CrackShot-shooter-hook")){
 			if (Bukkit.getPluginManager().getPlugin("CrackShot") != null){
 				crackshot_hook = true;
+				registerCrackshotListener();
 				logger.info(tmc_Races_pre + pdfFile.getVersion() + "は正しくCrackShotと連携しました");
 			}
-		}
-		if (this.getConfig().getBoolean("enable-NametagEdit-tab-hook")){
 			if (Bukkit.getPluginManager().getPlugin("NametagEdit") != null){
 				nametagedit_hook = true;
 				logger.info(tmc_Races_pre + pdfFile.getVersion() + "は正しくNametagEditと連携しました");
+				Nametag_Schedule nametag_schedule = new Nametag_Schedule();
+				if (Bukkit.getPluginManager().getPlugin("NEW_CLAN_PLUGIN") != null) //クランプラグイン待ち
+				{
+					nametag_schedule.runname_clanname(plugin0,thpre0);
+				}
+				else
+				{
+					nametag_schedule.runname(plugin0,thpre0);
+				}
 			}
-		}
 		if (this.getConfig().getBoolean("enable-ScoreboardAPI-listboard-hook")){
 			if (Bukkit.getPluginManager().getPlugin("ScoreboardAPI") != null){
 				scoreboardapi_hook = true;
@@ -118,7 +126,6 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 								sender.sendMessage(tmc_Races_pre + ChatColor.RED + "tmcr needpoint set <num> [playername] : プレイヤーのの種族ポイントを設定する");
 								sender.sendMessage(tmc_Races_pre + ChatColor.RED + "tmcr needpoint add <num> [playername] : プレイヤーのの種族ポイントを追加する");
 								sender.sendMessage(tmc_Races_pre + ChatColor.RED + "tmcr needpoint step <num> <max> [playername] : プレイヤーの種族ポイント（使い方は任意）をmaxを上限としてnum上昇する");
-//TODO 未実装								sender.sendMessage(tmc_Races_pre + ChatColor.RED + "tmcr needpoint scoreboard <objectives> [playername] : プレイヤーのの種族ポイントをスコアボード上の値から参照する");
 								sender.sendMessage(tmc_Races_pre + ChatColor.RED + "tmcr reload : リロード");
 							}
 							return true;
@@ -252,7 +259,7 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 									if (Bukkit.getPlayer(args[3]) != null)
 									{
 										Player pl = Bukkit.getPlayer(args[3]);
-										conf.set("user." + p.getUniqueId() + ".spilit", Integer.parseInt(args[2]));
+										conf.set("user." + pl.getUniqueId() + ".spilit", Integer.parseInt(args[2]));
 										p.sendMessage(tmc_Races_pre + ChatColor.AQUA +  "霊力：" + ChatColor.LIGHT_PURPLE + conf.getDouble(new StringBuilder("user.").append(pl.getUniqueId()).append(".spilit").toString()));
 										return true;
 									}
@@ -436,7 +443,7 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 						{
 							if(p.hasPermission("tmcr.needpoint.check"))
 							{
-								p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".needpoint").toString()) + "です");
+								p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getInt(new StringBuilder("user.").append(p.getUniqueId()).append(".point").toString()) + "です");
 							}
 							else
 							{
@@ -451,7 +458,7 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 								if(p.hasPermission("tmcr.needpoint.check"))
 								{
 									Player pl = Bukkit.getPlayer(args[2]);
-									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".needpoint").toString()) + "です");
+									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getInt(new StringBuilder("user.").append(pl.getUniqueId()).append(".point").toString()) + "です");
 								}
 								else
 								{
@@ -470,9 +477,9 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 							if(p.hasPermission("tmcr.needpoint.set"))
 							{
 								int needpoint = Integer.parseInt(args[2]);
-								conf.set("user." + p.getUniqueId() + ".needpoint", needpoint);
+								conf.set("user." + p.getUniqueId() + ".point", needpoint);
 								SaveTMCConfig();
-								p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".needpoint").toString()) + "になりました");
+								p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getInt(new StringBuilder("user.").append(p.getUniqueId()).append(".point").toString()) + "になりました");
 							}
 							else
 							{
@@ -488,9 +495,9 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 								{
 									int needpoint = Integer.parseInt(args[2]);
 									Player pl = Bukkit.getPlayer(args[3]);
-									conf.set("user." + pl.getUniqueId() + ".needpoint",needpoint);
+									conf.set("user." + pl.getUniqueId() + ".point",needpoint);
 									SaveTMCConfig();
-									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".needpoint").toString()) + "になりました");
+									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getInt(new StringBuilder("user.").append(pl.getUniqueId()).append(".point").toString()) + "になりました");
 								}
 								else
 								{
@@ -509,9 +516,9 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 							if(p.hasPermission("tmcr.needpoint.add"))
 							{
 								int needpoint = Integer.parseInt(args[2]);
-								conf.set("user." + p.getUniqueId() + ".needpoint", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".needpoint") + needpoint));
+								conf.set("user." + p.getUniqueId() + ".point", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".point") + needpoint));
 								SaveTMCConfig();
-								p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".needpoint").toString()) + "になりました");
+								p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getInt(new StringBuilder("user.").append(p.getUniqueId()).append(".point").toString()) + "になりました");
 							}
 							else
 							{
@@ -527,9 +534,9 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 								{
 									int needpoint = Integer.parseInt(args[2]);
 									Player pl = Bukkit.getPlayer(args[3]);
-									conf.set("user." + pl.getUniqueId() + ".needpoint", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".needpoint") + needpoint));
+									conf.set("user." + pl.getUniqueId() + ".point", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".point") + needpoint));
 									SaveTMCConfig();
-									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".needpoint").toString()) + "になりました");
+									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getInt(new StringBuilder("user.").append(pl.getUniqueId()).append(".point").toString()) + "になりました");
 								}
 								else
 								{
@@ -546,21 +553,21 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 						
 						else if (args.length == 4 && args[1].equalsIgnoreCase("step"))
 						{
-							if(p.hasPermission("tmcr.needpoint.step"))
+							if(p.hasPermission("tmcr.point.step"))
 							{
 								int needpoint = Integer.parseInt(args[2]);
 								int max = Integer.parseInt(args[3]);
-								if (Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".needpoint") + needpoint) >= max)
+								if (Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".point") + needpoint) >= max)
 								{
-									conf.set("user." + p.getUniqueId() + ".needpoint", max);
+									conf.set("user." + p.getUniqueId() + ".point", max);
 									SaveTMCConfig();
-									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは限界値として" + conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".needpoint").toString()) + "になりました");
+									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは限界値として" + conf.getInt(new StringBuilder("user.").append(p.getUniqueId()).append(".point").toString()) + "になりました");
 								}
 								else
 								{	
-									conf.set("user." + p.getUniqueId() + ".needpoint", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".needpoint") + needpoint));
+									conf.set("user." + p.getUniqueId() + ".point", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".point") + needpoint));
 									SaveTMCConfig();
-									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".needpoint").toString()) + "になりました");
+									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "あなた種族のポイントは" + conf.getInt(new StringBuilder("user.").append(p.getUniqueId()).append(".point").toString()) + "になりました");
 								}
 							}
 							else
@@ -580,15 +587,15 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 									Player pl = Bukkit.getPlayer(args[4]);
 									if (Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".needpoint") + needpoint) >= max)
 									{
-										conf.set("user." + pl.getUniqueId() + ".needpoint", max);
+										conf.set("user." + pl.getUniqueId() + ".point", max);
 										SaveTMCConfig();
-										p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族のポイントは限界値として" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".needpoint").toString()) + "になりました");
+										p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族のポイントは限界値として" + conf.getInt(new StringBuilder("user.").append(pl.getUniqueId()).append(".point").toString()) + "になりました");
 									}
 									else
 									{
-									conf.set("user." + pl.getUniqueId() + ".needpoint", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".needpoint") + needpoint));
+									conf.set("user." + pl.getUniqueId() + ".point", Integer.valueOf(conf.getInt("user." + p.getUniqueId() + ".needpoint") + needpoint));
 									SaveTMCConfig();
-									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".needpoint").toString()) + "になりました");
+									p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "プレイヤーの種族ポイントは" + conf.getInt(new StringBuilder("user.").append(pl.getUniqueId()).append(".point").toString()) + "になりました");
 									}
 								}
 								else
@@ -618,12 +625,12 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 								p.sendMessage(tmc_Races_pre + ChatColor.BOLD + p.getName() + "の進化できる先リスト");
 								List<String> evolraces = new ArrayList<String>();
 								for (String race : conf.getConfigurationSection("race").getKeys(false)) {
-									if (conf.getString("race." + race + ".racetype.root").contains(conf.getString("user." + p.getUniqueId() + ".race"))) {
+									if (conf.getString("race." + race + ".root").contains(conf.getString("user." + p.getUniqueId() + ".race"))) {
 										evolraces.add(race);
 									}
 								}
 								for (String evolrace : evolraces) {
-									p.sendMessage(ChatColor.GREEN + conf.getString(new StringBuilder("race.").append(evolrace).append(".display.real").toString()) + "：内部name＞" + evolrace);
+									p.sendMessage(ChatColor.GREEN + conf.getString(new StringBuilder("race.").append(evolrace).append(".real").toString()) + "：内部name＞" + evolrace);
 								}
 								return true;
 							}else {
@@ -639,12 +646,12 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 										p.sendMessage(tmc_Races_pre + ChatColor.GOLD + pl.getName() + "の進化できる先リスト");
 										List<String> evolraces = new ArrayList<String>();
 										for (String race : conf.getConfigurationSection("race").getKeys(false)) {
-											if (conf.getString("race." + race + ".racetype.root").contains(conf.getString("user." + pl.getUniqueId() + ".race"))) {
+											if (conf.getString("race." + race + ".root").contains(conf.getString("user." + pl.getUniqueId() + ".race"))) {
 												evolraces.add(race);
 											}
 										}
 										for (String evolrace : evolraces) {
-											p.sendMessage(ChatColor.GREEN + conf.getString(new StringBuilder("race.").append(evolrace).append(".display.real").toString()) + "：内部name＞" + evolrace);
+											p.sendMessage(ChatColor.GREEN + conf.getString(new StringBuilder("race.").append(evolrace).append(".real").toString()) + "：内部name＞" + evolrace);
 										}
 										return true;
 									}else {
@@ -655,92 +662,16 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 							}
 							else if(args.length == 3 && args[1].equalsIgnoreCase("try")){
 							if(p.hasPermission("tmcr.evol.try")){
-								boolean existrace = false;
-								String inforace = "";
-								for (String race : conf.getConfigurationSection("race").getKeys(false)) {
-									if (race.equalsIgnoreCase(args[2])){
-										existrace = true;
-										inforace = race;
-										break;
-									}
-								}
-								if (existrace){
-									if (conf.getString("race." + inforace + ".root").contains(conf.getString("user." + p.getUniqueId() + ".race"))){
-										PlayerInventory inventory = p.getInventory();
-										int ok_raceitem = 0;
-										ItemStack raceitem = null;
-										if (conf.getInt("race." + inforace + ".evol.raceitem.amount") != 0){
-											raceitem = new ItemStack(Material.getMaterial(conf.getInt("race." + inforace + ".evol.raceitem.typeid")), conf.getInt("race." + inforace + ".evol.raceitem.amount"));
-											int raceitemmeta = conf.getInt("race." + inforace + ".evol.raceitem.meta");
-											raceitem.setDurability((short)raceitemmeta);
-										    if (inventory.contains(raceitem)) {
-										    	ok_raceitem = 1;
-										    }
-										    else
-										    {
-										    	ok_raceitem = 2;
-										    }
-										}
-										int needpoint = conf.getInt("race." + inforace + ".evol.needpoint");
-										if ((ok_raceitem == 2)){
-											p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化用種族アイテムがありません！");
-											return false;
-										}else if (needpoint <= conf.getInt(conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".needpoint").toString())) ) {
-											p.playSound(p.getLocation(), Sound.PORTAL_TRAVEL, 1.0F, 1.0F);
-											if (ok_raceitem == 1) {
-												inventory.remove(raceitem);
-											}
-											conf.set("user." + p.getUniqueId() + ".race", inforace);
-											SaveTMCConfig();
-											Bukkit.broadcastMessage(tmc_Races_pre + ChatColor.AQUA + p.getName() + "は" + ChatColor.GRAY + conf.getString(new StringBuilder("race.").append(inforace).append(".root").toString()) + "から" + ChatColor.GOLD + conf.getString(new StringBuilder("race.").append(inforace).append(".real").toString()) + "に進化した！！");
-											ItemStack rewarditem = null;
-											if (conf.getInt("race." + inforace + "evol.rewarditemamount") != 0){
-												rewarditem = new ItemStack(Material.getMaterial(conf.getInt("race." + inforace + ".evol.rewarditemid")), conf.getInt("race." + inforace + ".evol.rewarditemamount"));
-												int rewarditemmeta = conf.getInt("race." + inforace + ".evol.rewarditemmeta");
-												rewarditem.setDurability((short)rewarditemmeta);
-												p.getInventory().addItem(new ItemStack[] { rewarditem });
-											}
-											return true;
-										}
-										else
-										{
-											p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化条件種族ポイントが足りません！");
-											return false;
-										}
-									}else {
-										p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化できる種族ではありません！");
-										return false;
-									}
-								}else {
-									p.sendMessage(tmc_Races_pre + ChatColor.RED + "その種族内部nameは存在しません。");
-									return false;
-								}
-							}else {
-								p.sendMessage(tmc_Races_pre + ChatColor.RED + "権限がありません！");
-								return false;
-							}
-							}else if(args.length == 4 && args[1].equalsIgnoreCase("try")){
-								if (Bukkit.getPlayer(args[3]) != null)
-								{
-								if(p.hasPermission("tmcr.evol.try.other")){
-									Player pl = Bukkit.getPlayer(args[2]);
-									boolean existrace = false;
-									String inforace = "";
-									for (String race : conf.getConfigurationSection("race").getKeys(false)) {
-										if (race.equalsIgnoreCase(args[2])){
-											existrace = true;
-											inforace = race;
-											break;
-										}
-									}
-									if (existrace){
-										if (conf.getString("race." + inforace + ".root").contains(conf.getString("user." + pl.getUniqueId() + ".race"))){
-											PlayerInventory inventory = pl.getInventory();
+								if (conf.contains("user." + p.getUniqueId())){
+									if (conf.getString("race." + args[2] + ".root") != null )
+									{
+										if (conf.getString("race." + args[2] + ".root").equalsIgnoreCase(conf.getString("user." + p.getUniqueId() + ".race"))){
+											PlayerInventory inventory = p.getInventory();
 											int ok_raceitem = 0;
 											ItemStack raceitem = null;
-											if (conf.getInt("race." + inforace + ".evol.raceitem.amount") != 0){
-												raceitem = new ItemStack(Material.getMaterial(conf.getInt("race." + inforace + ".evol.raceitem.typeid")), conf.getInt("race." + inforace + ".evol.raceitem.amount"));
-												int raceitemmeta = conf.getInt("race." + inforace + ".evol.raceitem.meta");
+											if (conf.getInt("race." + args[2] + ".evol.costitemamount") != 0){
+												raceitem = new ItemStack(Material.getMaterial(conf.getInt("race." + args[2] + ".evol.costitemid")), conf.getInt("race." + args[2]+ ".evol.costitemamount"));
+												int raceitemmeta = conf.getInt("race." + args[2] + ".evol.costitemmeta");
 												raceitem.setDurability((short)raceitemmeta);
 											    if (inventory.contains(raceitem)) {
 											    	ok_raceitem = 1;
@@ -750,30 +681,31 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 											    	ok_raceitem = 2;
 											    }
 											}
-											int needpoint = conf.getInt("race." + inforace + ".evol.needpoint");
+											int needpoint = conf.getInt("race." + args[2] + ".evol.needpoint");
 											if ((ok_raceitem == 2)){
 												p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化用種族アイテムがありません！");
 												return false;
-											}else if (needpoint <= conf.getInt(conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".needpoint").toString())) ) {
-												pl.playSound(pl.getLocation(), Sound.PORTAL_TRAVEL, 1.0F, 1.0F);
+											}else if (needpoint <= conf.getInt("user." + p.getUniqueId() + ".point")) {
+												p.playSound(p.getLocation(), Sound.PORTAL_TRAVEL, 1.0F, 1.0F);
 												if (ok_raceitem == 1) {
 													inventory.remove(raceitem);
 												}
-												conf.set("user." + pl.getUniqueId() + ".race", inforace);
+												conf.set("user." + p.getUniqueId() + ".race", args[2]);
 												SaveTMCConfig();
-												Bukkit.broadcastMessage(tmc_Races_pre + ChatColor.AQUA + pl.getName() + "は" + ChatColor.GRAY + conf.getString(new StringBuilder("race.").append(inforace).append(".root").toString()) + "から" + ChatColor.GOLD + conf.getString(new StringBuilder("race.").append(inforace).append(".real").toString()) + "に進化した！！");
+												Bukkit.broadcastMessage(tmc_Races_pre + ChatColor.AQUA + p.getName() + "は" + ChatColor.GRAY + conf.getString(new StringBuilder("race.").append(args[2]).append(".root").toString()) + "から" + ChatColor.GOLD + conf.getString(new StringBuilder("race.").append(args[2]).append(".real").toString()) + "に進化した！！");
 												ItemStack rewarditem = null;
-												if (conf.getInt("race." + inforace + "evol.rewarditemamount") != 0){
-													rewarditem = new ItemStack(Material.getMaterial(conf.getInt("race." + inforace + ".evol.rewarditemid")), conf.getInt("race." + inforace + ".evol.rewarditemamount"));
-													int rewarditemmeta = conf.getInt("race." + inforace + ".evol.rewarditemmeta");
+												if (conf.getInt("race." + args[2] + "evol.rewarditemamount") != 0){
+													rewarditem = new ItemStack(Material.getMaterial(conf.getInt("race." + args[2] + ".evol.rewarditemid")), conf.getInt("race." + args[2]+ ".evol.rewarditemamount"));
+													int rewarditemmeta = conf.getInt("race." + args[2] + ".evol.rewarditemmeta");
 													rewarditem.setDurability((short)rewarditemmeta);
-													pl.getInventory().addItem(new ItemStack[] { rewarditem });
+													p.getInventory().addItem(new ItemStack[] { rewarditem });
 												}
 												return true;
 											}
 											else
 											{
 												p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化条件種族ポイントが足りません！");
+												return false;
 											}
 										}else {
 											p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化できる種族ではありません！");
@@ -788,46 +720,120 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 									return false;
 								}
 							}
-							else
-							{
-								p.sendMessage(ChatColor.RED + tmc_Races_pre + "プレイヤー名が不正です！");
-								return false;
-							}
-						}
-							else
-							{
-								p.sendMessage(tmc_Races_pre + "/tmcr setrace <race> [playername]");
-								return false;
-							}
-						//プレイヤー種族を無条件で設定する
-						}else if(args[0].equalsIgnoreCase("setrace")){
-							if(p.hasPermission("tmcr.setrace")){
-								if(args.length == 2){
-									conf.set("user." + p.getUniqueId() + ".race", args[1].toString());
-									SaveTMCConfig();
-									p.sendMessage(tmc_Races_pre + ChatColor.LIGHT_PURPLE + "あなたは種族が" + conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".race").toString()) + "になりました。");
-									return true;
-								}else if(args.length == 3){
-									if (Bukkit.getPlayer(args[2]) != null){
-										Player pl = Bukkit.getPlayer(args[2]);
-										conf.set("user." + pl.getUniqueId() + ".race", args[1].toString());
-										SaveTMCConfig();
-										p.sendMessage(tmc_Races_pre + ChatColor.LIGHT_PURPLE + pl.getName() + "の種族を" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".race").toString()) + "にしました。");
-										pl.sendMessage(tmc_Races_pre + ChatColor.LIGHT_PURPLE + "あなたは種族が" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".race").toString()) + "になりました。");
-										return true;
+							}else if(args.length == 4 && args[1].equalsIgnoreCase("try")){
+								if (Bukkit.getPlayer(args[3]) != null)
+								{
+								if(p.hasPermission("tmcr.evol.try.other")){
+									Player pl = Bukkit.getPlayer(args[3]);
+									if (conf.contains("user." + pl.getUniqueId())){
+										if (conf.getString("race." + args[2] + ".root") != null )
+										{
+											if (conf.getString("race." + args[2] + ".root").equalsIgnoreCase(conf.getString("user." + pl.getUniqueId() + ".race"))){
+												PlayerInventory inventory = pl.getInventory();
+												int ok_raceitem = 0;
+												ItemStack raceitem = null;
+												if (conf.getInt("race." + args[2] + ".evol.costitemamount") != 0){
+													raceitem = new ItemStack(Material.getMaterial(conf.getInt("race." + args[2] + ".evol.costitemid")), conf.getInt("race." + args[2] + ".evol.costitemamount"));
+													int raceitemmeta = conf.getInt("race." + args[2] + ".evol.costitemmeta");
+													raceitem.setDurability((short)raceitemmeta);
+												    if (inventory.contains(raceitem)) {
+												    	ok_raceitem = 1;
+												    }
+												    else
+												    {
+												    	ok_raceitem = 2;
+												    }
+												}
+												int needpoint = conf.getInt("race." + args[2] + ".evol.needpoint");
+												if ((ok_raceitem == 2)){
+													p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化用種族アイテムがありません！");
+													return false;
+												}else if (needpoint <= conf.getInt("user." + p.getUniqueId() + ".point")) {
+													pl.playSound(pl.getLocation(), Sound.PORTAL_TRAVEL, 1.0F, 1.0F);
+													if (ok_raceitem == 1) {
+														inventory.remove(raceitem);
+													}
+													conf.set("user." + pl.getUniqueId() + ".race", args[2]);
+													SaveTMCConfig();
+													Bukkit.broadcastMessage(tmc_Races_pre + ChatColor.AQUA + pl.getName() + "は" + ChatColor.GRAY + conf.getString(new StringBuilder("race.").append(args[2]).append(".root").toString()) + "から" + ChatColor.GOLD + conf.getString(new StringBuilder("race.").append(args[2]).append(".real").toString()) + "に進化した！！");
+													ItemStack rewarditem = null;
+													if (conf.getInt("race." + args[2] + "evol.rewarditemamount") != 0){
+														rewarditem = new ItemStack(Material.getMaterial(conf.getInt("race." + args[2] + ".evol.rewarditemid")), conf.getInt("race." + args[2] + ".evol.rewarditemamount"));
+														int rewarditemmeta = conf.getInt("race." + args[2] + ".evol.rewarditemmeta");
+														rewarditem.setDurability((short)rewarditemmeta);
+														pl.getInventory().addItem(new ItemStack[] { rewarditem });
+													}
+													return true;
+												}
+												else
+												{
+													p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化条件種族ポイントが足りません！");
+												}
+											}else {
+												p.sendMessage(tmc_Races_pre + ChatColor.RED + "進化できる種族ではありません！");
+												return false;
+											}
+										}else {
+											p.sendMessage(tmc_Races_pre + ChatColor.RED + "その種族内部nameは存在しません。");
+											return false;
+										}
+									}else {
+										p.sendMessage(tmc_Races_pre + ChatColor.RED + "権限がありません！");
+										return false;
 									}
-								}else {
-									p.sendMessage(tmc_Races_pre + "/tmcr setrace <PlayerName> (race)");
+								}
+								else
+								{
+									p.sendMessage(ChatColor.RED + tmc_Races_pre + "プレイヤー名が不正です！");
 									return false;
 								}
-							}else {
-								p.sendMessage(tmc_Races_pre + ChatColor.RED + "権限がありません！");
-								return false;
+							}
+								else
+								{
+									p.sendMessage(tmc_Races_pre + "/tmcr setrace <race> [playername]");
+									return false;
+								}
+							}
+							//プレイヤー種族を無条件で設定する
+							}else if(args[0].equalsIgnoreCase("setrace")){
+								if(p.hasPermission("tmcr.setrace")){
+									if(args.length == 2){
+											conf.set("user." + p.getUniqueId() + ".race", args[1].toString());
+											SaveTMCConfig();
+											p.sendMessage(tmc_Races_pre + ChatColor.LIGHT_PURPLE + "あなたは種族が" + conf.getString(new StringBuilder("user.").append(p.getUniqueId()).append(".race").toString()) + "になりました。");
+											return true;
+									}else if(args.length == 3){
+										if (Bukkit.getPlayer(args[2]) != null){
+											Player pl = Bukkit.getPlayer(args[2]);
+												conf.set("user." + pl.getUniqueId() + ".race", args[1].toString());
+												SaveTMCConfig();
+												p.sendMessage(tmc_Races_pre + ChatColor.LIGHT_PURPLE + pl.getName() + "の種族を" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".race").toString()) + "にしました。");
+												pl.sendMessage(tmc_Races_pre + ChatColor.LIGHT_PURPLE + "あなたは種族が" + conf.getString(new StringBuilder("user.").append(pl.getUniqueId()).append(".race").toString()) + "になりました。");
+												return true;
+										}
+									}else {
+										p.sendMessage(tmc_Races_pre + "/tmcr setrace <PlayerName> (race)");
+										return false;
+									}
+								}else {
+									p.sendMessage(tmc_Races_pre + ChatColor.RED + "権限がありません！");
+									return false;
+							}
+	
 						}
-					}
-						else {
-						p.sendMessage(tmc_Races_pre + ChatColor.RED + "コマンドが存在しません！");
-					}
+							else {
+							p.sendMessage(tmc_Races_pre + ChatColor.RED + "コマンドが存在しません！");
+							return false;
+						}
+				}
+				
+			}
+			else if (args[0].equalsIgnoreCase("reload"))
+			{
+				if(p.hasPermission("tmcr.reload"))
+				{
+					reloadTMCConfig();
+					p.sendMessage(tmc_Races_pre + ChatColor.AQUA + "リロードしました");
 				}
 			}
 		}
@@ -839,6 +845,9 @@ public class TouhouMC_Races_Basic extends JavaPlugin implements Listener {
 		new Races_SkillMiscListener(this);
 	}
 
+	private void registerCrackshotListener() {
+		new CrackShotListener(this);
+	}
 	public static void SaveTMCConfig(){
 		try {
 			conf.save(configfile);

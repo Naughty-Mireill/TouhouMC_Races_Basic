@@ -3,6 +3,7 @@ package net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Listener.Listene
 import java.util.List;
 
 import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.TouhouMC_Races_Basic;
+import net.TouhouMC.noteumaple.TouhouMC_Races_Basic.RaceSkills.Races_Global;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
@@ -29,17 +30,15 @@ public class Races_NNG extends JavaPlugin {
 	public static void sennnin_passthough(Player pl, Plugin plugin){
 		float pitch = pl.getLocation().getPitch();
 		float yaw = pl.getLocation().getYaw();
-		Location warploc = new Location (pl.getWorld(),pl.getLocation().getX() + pl.getLocation().getDirection().getX() * 2,pl.getLocation().getY() + pl.getLocation().getDirection().getY() * 2,pl.getLocation().getZ() + pl.getLocation().getDirection().getZ() * 2);
+		Location warploc = new Location (pl.getWorld(),pl.getLocation().getX() + pl.getLocation().getDirection().getX() * 8,pl.getLocation().getY() + pl.getLocation().getDirection().getY() * 8,pl.getLocation().getZ() + pl.getLocation().getDirection().getZ() * 8);
 		if (pl.getWorld().getBlockAt(warploc).getType() != Material.AIR){
 			pl.getWorld().playSound(pl.getLocation(), Sound.ENDERMAN_HIT, 2, 0);
 		}else{
-			pl.getWorld().playSound(pl.getLocation(), Sound.ENDERMAN_TELEPORT, 2, 1);
+			pl.getWorld().playSound(pl.getLocation(), Sound.DIG_SAND, 2, 0);
 			pl.getWorld().playEffect(pl.getLocation(), Effect.COLOURED_DUST, 1, 5);
 			warploc.setPitch(pitch);
 			warploc.setYaw(yaw);
 			pl.teleport(warploc);
-			plugin.getConfig().set("user." + pl.getUniqueId() + ".spilit", plugin.getConfig().getDouble("user." + pl.getUniqueId() + ".spilit") - 20);
-			plugin.saveConfig();
 		}
 	}
 
@@ -52,9 +51,16 @@ public class Races_NNG extends JavaPlugin {
 		List<Entity> enemys = pl.getNearbyEntities(12.0D, 12.0D, 12.0D);
 		for (Entity enemy : enemys) {
 			if (((enemy instanceof LivingEntity)) && (enemy.isOnGround())){
+				boolean no_damage = false;
+				if (enemy instanceof Player)
+				{
+					no_damage = Races_Global.No_Team_Friendly_Fire(plugin, pl, (Player) enemy);
+				}
+				if (!no_damage)
+				{
 				((LivingEntity)enemy).damage(25.0D);
 				enemy.getLocation().getWorld().playSound(enemy.getLocation(), Sound.HORSE_HIT, 1.0F, 0.0F);
-			}
+			}}
 		}
 		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
 		pl.setMetadata("using-magic", usingmagic);
@@ -122,12 +128,20 @@ public class Races_NNG extends JavaPlugin {
 		enemys.add(pl);
 		for (Entity enemy : enemys){
 			if (enemy instanceof LivingEntity && enemy.isDead() == false){
+				boolean no_damage = false;
+				if (enemy instanceof Player)
+				{
+					no_damage = Races_Global.No_Team_Friendly_Fire(plugin, pl, (Player) enemy);
+				}
+				if (no_damage)
+				{
 				if (((LivingEntity) enemy).getHealth() + 12D > ((LivingEntity) enemy).getMaxHealth()){
 					((LivingEntity) enemy).setHealth(((LivingEntity) enemy).getMaxHealth());
 					enemy.getLocation().getWorld().playSound(enemy.getLocation(), Sound.LEVEL_UP, 1, 2);
 				}else{
 					((LivingEntity) enemy).setHealth(((LivingEntity) enemy).getHealth() + 12D);
 					enemy.getLocation().getWorld().playSound(enemy.getLocation(), Sound.LEVEL_UP, 1, 2);
+				}
 				}
 			}
 		}
@@ -146,20 +160,8 @@ public class Races_NNG extends JavaPlugin {
 	//雷魔法
 	public static void magic_thunder(final Player pl, final Plugin plugin, PlayerInteractEvent e) {
 		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.DARK_PURPLE + "雷の魔法を唱えた！");
-		Entity lightning1 = pl.getWorld().spawnEntity(e.getClickedBlock().getLocation().add(4D,0,0), EntityType.LIGHTNING);
-		Entity lightning2 = pl.getWorld().spawnEntity(e.getClickedBlock().getLocation().add(-4D,0,0), EntityType.LIGHTNING);
-		Entity lightning3 = pl.getWorld().spawnEntity(e.getClickedBlock().getLocation().add(0,0,4D), EntityType.LIGHTNING);
-		Entity lightning4 = pl.getWorld().spawnEntity(e.getClickedBlock().getLocation().add(0,0,-4D), EntityType.LIGHTNING);
-		MetadataValue lightningeffect = new FixedMetadataValue(plugin, 20D) ;
-		MetadataValue shooter = new FixedMetadataValue(plugin, pl.getUniqueId().toString()) ;
-		lightning1.setMetadata("lightningeffect", lightningeffect);
-		lightning2.setMetadata("lightningeffect", lightningeffect);
-		lightning3.setMetadata("lightningeffect", lightningeffect);
-		lightning4.setMetadata("lightningeffect", lightningeffect);
-		lightning1.setMetadata("shooter", shooter);
-		lightning2.setMetadata("shooter", shooter);
-		lightning3.setMetadata("shooter", shooter);
-		lightning4.setMetadata("shooter", shooter);
+		pl.setNoDamageTicks(20);
+		pl.getWorld().spawnEntity(pl.getLocation(), EntityType.LIGHTNING);
 		MetadataValue usingmagic = new FixedMetadataValue(plugin, true) ;
 		pl.setMetadata("using-magic", usingmagic);
 		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
@@ -203,6 +205,200 @@ public class Races_NNG extends JavaPlugin {
 		});
 	}
 
+	//TODO 魔界人
+	
+	//ピッケル＝メテオ魔法
+	public static void magic_meteor(final Player pl,final Plugin plugin){
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.YELLOW + "メテオを唱えた！");
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.ENDERDRAGON_GROWL, 1.0F, 0.0F);
+		Location location = new Location (pl.getWorld(),pl.getLocation().getX() + pl.getLocation().getDirection().getX() * 20,pl.getLocation().getY() + 50,pl.getLocation().getZ() + pl.getLocation().getDirection().getZ() * 20);
+		Vector velocity=new Vector(0D,-9D,0D);
+		Entity firevall =pl.getWorld().spawnEntity(location.add(0D, 48D, 0D), EntityType.FIREBALL);
+		MetadataValue shooter = new FixedMetadataValue(plugin, pl.getUniqueId().toString()) ;
+		MetadataValue fireeffect = new FixedMetadataValue(plugin, 30D) ;
+		firevall.setMetadata("meteoreffect", fireeffect);
+		firevall.setMetadata("makizin-meteor", shooter);
+		firevall.setVelocity(velocity);
+		firevall.setFireTicks(300);
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+		pl.setMetadata("using-magic", usingmagic);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+				pl.setMetadata("using-magic", usingmagic);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
+			}
+		}, 180L);
+	}
+
+	//シャベル＝フェザーフライ魔法
+	public static void magic_flyfeather(final Player pl,final Plugin plugin){
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.YELLOW + "フェザーフライを唱えた！");
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.WITHER_SHOOT, 1.0F, 0.0F);
+		pl.setAllowFlight(true);
+		pl.setFlying(true);
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+		pl.setMetadata("using-magic", usingmagic);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				pl.setFlying(false);
+				pl.setAllowFlight(false);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱の効果が終わりました");
+				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+					public void run(){
+						MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+						pl.setMetadata("using-magic", usingmagic);
+						pl.setFlying(false);
+						pl.setAllowFlight(false);
+						pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
+					}
+				}, 200L);
+			}
+		}, 160L);
+	}
+	
+	//斧＝タイフーン
+	public static void magic_tyhoon(final Player pl, final Plugin plugin, PlayerInteractEvent e) {
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GREEN + "タイフーンを唱えた！");
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.PORTAL, 3, 1);
+		List<Entity> enemys=pl.getNearbyEntities(20D, 20D, 20D);
+		for (Entity enemy : enemys){
+			if (enemy instanceof LivingEntity && enemy.isDead() == false){
+				boolean no_damage = false;
+				if (enemy instanceof Player)
+				{
+					no_damage = Races_Global.No_Team_Friendly_Fire(plugin, pl, (Player) enemy);
+				}
+				if (!no_damage)
+				{
+				enemy.setVelocity(enemy.getVelocity().add(new Vector(Math.random() * 3,Math.random() * 3,Math.random() * 3)));
+				}
+			}
+		}
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, true) ;
+		pl.setMetadata("using-magic", usingmagic);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, false) ;
+				pl.setMetadata("using-magic", usingmagic);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
+			}
+		}
+		, 150L);
+	}
+	
+	//鍬＝インビンシブル魔法
+	public static void magic_invincible(final Player pl, final Plugin plugin) {
+		MetadataValue casting = new FixedMetadataValue(plugin, true) ;
+		pl.setMetadata("casting", casting);
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.RED + "インビンシブルを唱えた！");
+		pl.getWorld().playSound(pl.getLocation(), Sound.ANVIL_BREAK, 1, 0);
+		pl.getWorld().playEffect(pl.getLocation(), Effect.WITCH_MAGIC, 1, 1);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.YELLOW + "無敵になった！！");
+				pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.ENDERMAN_STARE, 1, 0);
+				pl.setNoDamageTicks(200);
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, true) ;
+				pl.setMetadata("using-magic", usingmagic);
+				plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+					public void run(){
+					  MetadataValue usingmagic = new FixedMetadataValue(plugin, false) ;
+					  pl.setMetadata("using-magic", usingmagic);
+					  pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱の効果及びクールダウンが終わりました");
+					}
+				}, 200L);
+				MetadataValue casted = new FixedMetadataValue(plugin, false) ;
+				pl.setMetadata("casting", casted);
+			}
+		}, 60L);
+	}
+	//TODO 夢現人
+	//使い捨てワープゲート設置
+	public static void mugen_one_gate_put(final Player pl, final Plugin plugin) {
+		MetadataValue casting = new FixedMetadataValue(plugin, true) ;
+		pl.setMetadata("casting", casting);
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.RED + "現在値に夢現の狭間を作った！");
+		pl.getWorld().playSound(pl.getLocation(), Sound.ENDERMAN_IDLE, 1, 2);
+		pl.getWorld().playEffect(pl.getLocation(), Effect.WITCH_MAGIC, 1, 1);
+		
+		MetadataValue mugen_locw = new FixedMetadataValue(plugin, pl.getWorld().getName());
+		pl.setMetadata("mugen_locw", mugen_locw);
+		MetadataValue mugen_locx = new FixedMetadataValue(plugin, pl.getLocation().getBlockX());
+		pl.setMetadata("mugen_locx", mugen_locx);
+		MetadataValue mugen_locy = new FixedMetadataValue(plugin, pl.getLocation().getBlockY());
+		pl.setMetadata("mugen_locy", mugen_locy);
+		MetadataValue mugen_locz = new FixedMetadataValue(plugin, pl.getLocation().getBlockZ());
+		pl.setMetadata("mugen_locz", mugen_locz);
+		
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+		pl.setMetadata("using-magic", usingmagic);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+				pl.setMetadata("using-magic", usingmagic);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
+			}
+		}, 180L);
+	}
+	//使い捨てワープゲート発動
+	public static void mugen_one_gate_use(final Player pl, final Plugin plugin) {
+		MetadataValue casting = new FixedMetadataValue(plugin, true) ;
+		pl.setMetadata("casting", casting);
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.RED + "夢現の狭間を使った！！");
+		pl.getWorld().playSound(pl.getLocation(), Sound.ENDERMAN_HIT, 1, 2);
+		pl.getWorld().playEffect(pl.getLocation(), Effect.WITCH_MAGIC, 1, 1);
+		MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(true));
+		pl.setMetadata("using-magic", usingmagic);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				pl.getWorld().playEffect(pl.getLocation(), Effect.WITCH_MAGIC, 1, 1);
+				if (pl.hasMetadata("mugen_locw"))
+				{
+					if (pl.getMetadata("mugen_locw").get(0).asString().equals(pl.getWorld().getName())){
+						pl.getWorld().playSound(pl.getLocation(), Sound.ENDERMAN_TELEPORT, 1, 2);
+						pl.teleport(new Location(pl.getWorld(), pl.getMetadata("mugen_locx").get(0).asDouble(),pl.getMetadata("mugen_locy").get(0).asDouble(),pl.getMetadata("mugen_locz").get(0).asDouble()));
+					}
+					else
+					{
+						pl.getWorld().playSound(pl.getLocation(), Sound.ENDERDRAGON_DEATH, 1, 2);
+						pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.RED + "しかし違う時空世界にはつながらなかった！！");
+					}
+					pl.removeMetadata("mugen_locw", plugin);
+					pl.removeMetadata("mugen_locx", plugin);
+					pl.removeMetadata("mugen_locy", plugin);
+					pl.removeMetadata("mugen_locz", plugin);
+					pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GOLD + "夢現の狭間を消えた！");
+				}
+				else
+				{
+					pl.getWorld().playSound(pl.getLocation(), Sound.ENDERDRAGON_DEATH, 1, 2);
+					pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.RED + "しかし狭間を作っていなかった！");
+				}
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, Boolean.valueOf(false));
+				pl.setMetadata("using-magic", usingmagic);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱の効果とクールダウンが終わりました");
+			}
+		}, 100L);
+	}
+	
+	//TODO 月人
+	//蘇生率アップ
+	public static void tukibito_regen_chance_boost(final Player pl, final Plugin plugin, PlayerInteractEvent e) {
+		pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.GREEN + "自身の蘇生確率を大幅に上げた！！");
+		pl.getLocation().getWorld().playSound(pl.getLocation(), Sound.SUCCESSFUL_HIT, 1, 0);
+		MetadataValue regen_chance_boost = new FixedMetadataValue(plugin, true) ;
+		pl.setMetadata("regen_chance_boost", regen_chance_boost);
+		plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable(){
+			public void run(){
+				MetadataValue usingmagic = new FixedMetadataValue(plugin, false) ;
+				pl.setMetadata("using-magic", usingmagic);
+				pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.BLUE + "詠唱のクールダウンが終わりました");
+			}
+		}
+		, 60L);
+	}
+	
 	////パッシブスキル系
 	///エンティティ専用
 	public static void sibito_deadattack(Player pl, Plugin plugin, EntityDamageByEntityEvent event){
@@ -214,23 +410,72 @@ public class Races_NNG extends JavaPlugin {
 	}
 
 	public static void gennzinnsin_luckyattack(Player pl, final Plugin plugin, EntityDamageByEntityEvent event){
-		if (Math.random() > 0.7 && plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") >= 5D){
+		if (Math.random() > 0.7 && plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") >= 35D){
 			plugin.getConfig().set(plugin.getConfig().getString("user." + pl.getUniqueId() + ".spilit"),plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") - 5D);
 			event.setDamage(event.getDamage() + 5D);
 			pl.getWorld().playSound(pl.getLocation(), Sound.SUCCESSFUL_HIT, 1, 1);
 		}
 	}
-
+	//TODO 聖人
+	public static void seizin_luckydefence(Player pl, final Plugin plugin, EntityDamageByEntityEvent event){
+		if (event.getDamage() > 1 && Math.random() > 0.7 && plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") >= 35D){
+			plugin.getConfig().set(plugin.getConfig().getString("user." + pl.getUniqueId() + ".spilit"),plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") - 5D);
+			event.setDamage(event.getDamage() - 3D);
+			pl.getWorld().playSound(pl.getLocation(), Sound.ITEM_BREAK, 1, 2);
+		}
+	}
+	
+	//TODO 天人
+	public static void tennzin_mazo(Player pl, final Plugin plugin, EntityDamageByEntityEvent event){
+		if (event.getDamage() > 4 && Math.random() > 0.8 && plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") >= 30D){
+			plugin.getConfig().set(plugin.getConfig().getString("user." + pl.getUniqueId() + ".spilit"),plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") - 10D);
+			event.setDamage(event.getDamage() * -1);
+			pl.getWorld().playSound(pl.getLocation(), Sound.VILLAGER_DEATH, 1, 2);
+		}
+	}
+	
+	//TODO 古代人
+	public static void kodaizin_anti_chain(Player pl, final Plugin plugin, EntityDamageByEntityEvent event){
+		if (event.getDamage() > 0 && plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") >= 40D){
+			plugin.getConfig().set(plugin.getConfig().getString("user." + pl.getUniqueId() + ".spilit"),plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") - 1D);
+			if (pl.hasMetadata("anti_chain"))
+			{
+				pl.getWorld().playSound(pl.getLocation(), Sound.IRONGOLEM_THROW, 1, 1);
+				event.setDamage(event.getDamage() / 2);
+			}
+			else
+			{
+				MetadataValue anti_chain = new FixedMetadataValue(plugin, true) ;
+				pl.setMetadata("anti_chain", anti_chain);
+			}
+		}
+	}
+	
+	//TODO 閻魔
+	public static void ennma_judgementattack(Player pl, Plugin plugin, EntityDamageByEntityEvent event){
+		if (pl.getHealth() <= 5D){
+			event.setDamage(event.getDamage() + 12D);
+			event.getDamager().getWorld().playSound(pl.getLocation(), Sound.ZOMBIE_PIG_ANGRY, 1, 2);
+		}
+	}
 	///エンティティ・ブロック兼用
 	public static void houraizin_reverselife_Entity(Player pl, Plugin plugin, EntityDamageByEntityEvent event){
+		if (event.getDamage() >= pl.getHealth())
+		{
 		double reverse = Math.random();
-		if (event.getDamage() >= pl.getHealth() && reverse > 0.6){
+		double chance = 0.6;
+		if (pl.hasMetadata("regen_chance_boost"))
+		{
+			chance = 0.2;
+			pl.removeMetadata("regen_chance_boost", plugin);
+		}
+		if (reverse > chance){
 			plugin.getConfig().set(plugin.getConfig().getString("user." + pl.getUniqueId() + ".spilit"),plugin.getConfig().getInt("user." + pl.getUniqueId() + ".spilit") - 30D);
 			pl.setHealth(pl.getMaxHealth());
 			pl.sendMessage(TouhouMC_Races_Basic.tmc_Races_pre + ChatColor.AQUA + "貴方は不死の力を使い蘇った！！");
 			pl.getWorld().playSound(pl.getLocation(), Sound.BLAZE_BREATH, 1, -1);
 			event.setDamage(0D);
-		}
+		}}
 	}
 
 	public static void houraizin_reverselife_block(Player pl, Plugin plugin, EntityDamageEvent event){
